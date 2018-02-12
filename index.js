@@ -1,9 +1,17 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const session = require('express-session');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const urlConnect = 'mongodb://admin:VuOd3VKlZCpBVLYQ@meu-dinheiro-shard-00-00-qcut3.mongodb.net:27017,meu-dinheiro-shard-00-01-qcut3.mongodb.net:27017,meu-dinheiro-shard-00-02-qcut3.mongodb.net:27017/chat?ssl=true&replicaSet=meu-dinheiro-shard-0&authSource=admin';
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
+const urlConnect = process.env.DB_URL;
+const port = process.env.PORT || 3000;
+
+const Room = require('./models/room');
 
 mongoose.Promise = global.Promise;
 
@@ -38,8 +46,21 @@ app.get('/room', (req, res) => {
   res.render('room', { name: req.session.user.name });
 });
 
+io.on('connection', socket => {
+
+  socket.on('addRoom', roomName => {
+    const room = new Room({ name: roomName });
+    room
+      .save()
+      .then(() => {
+        io.emit('newRoom', room);
+      });
+  });
+
+});
+
 mongoose
   .connect(urlConnect)
   .then(() => {
-    app.listen(3000, () => console.log('running...'));
+    http.listen(port, () => console.log('running...'));
   });
