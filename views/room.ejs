@@ -21,17 +21,11 @@
   <div class="container w-container">
     <div class="rooms">
       <h1 class="title-rooms">Salas Disponíveis</h1>
-      <ul class="room-list w-list-unstyled">
-        <!-- <li class="room-item">Sala 1</li>
-        <li class="room-item">Sala 2</li>
-        <li class="room-item">Sala 3 <span class="notifications">(2)</span></li> -->
-      </ul>
+      <ul class="room-list w-list-unstyled"></ul>
       <div class="add-room">+</div>
     </div>
     <div class="room">
-      <div class="messages">
-        <div class="message"><span class="author">Tulio Faria</span><br><span class="msg-body">Mensagem aqui</span></div>
-      </div>
+      <div class="messages"></div>
       <div class="new-message-form w-form">
         <form id="email-form" name="email-form" data-name="Email Form" class="form">
             <textarea id="msg" name="msg" maxlength="5000" placeholder="Digite sua mensagem e pressione &lt;Enter&gt;" autofocus="true" class="msg w-input"></textarea>
@@ -57,6 +51,16 @@
 
             const addRoom = (id, name) => {
                 $('.room-list').append(`<li data-id="${id}" class="room-item">${name}<span class="notifications"></span></li>`);
+            };
+
+            const addMsg = msg => {
+                const html = `
+                    <div class="message">
+                        <span class="author">${msg.author}</span><br>
+                        <span class="msg-body">${msg.message}</span>
+                    </div>`;
+
+                $('.messages').append(html);
             };
 
             $('.room-list').on('click', '.room-item', function() {
@@ -89,9 +93,21 @@
             });
 
             socket.on('roomList', function(rooms) {
-                rooms.map(room => {
-                    addRoom(room._id, room.name);
-                });
+                $('.room-list').html('');
+                rooms.map(room => addRoom(room._id, room.name));
+            });
+
+            socket.on('newMsg', function(message) {
+                if (selectedRoom === message.room) {
+                    addMsg(message);
+                } else {
+
+                }
+            });
+
+            socket.on('msgList', function(msgs) {
+                $('.messages').html('');
+                msgs.map(msg => addMsg(msg));
             });
         });
   </script>

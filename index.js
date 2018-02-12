@@ -69,19 +69,26 @@ io.on('connection', socket => {
 
   socket.on('join', roomId => {
     socket.join(roomId);
+
+    Message
+      .find({room: roomId})
+      .then(msgs => socket.emit('msgList', msgs));
   });
 
   socket.on('sendMsg', msg => {
     const message = new Message({
-      message: msg.text
+      author: socket.handshake.session.user.name,
+      when: new Date(),
+      message: msg.text,
+      msgType: 'text',
+      room: msg.room
     });
 
-    console.log(msg);
-    console.log(socket.handshake.session);
-
-    // message
-    //   .save()
-    //   .then();
+    message
+      .save()
+      .then(() => {
+        io.to(msg.room).emit('newMsg', message)
+      });
   });
 
 });
