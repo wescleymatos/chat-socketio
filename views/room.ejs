@@ -33,7 +33,10 @@
         <div class="message"><span class="author">Tulio Faria</span><br><span class="msg-body">Mensagem aqui</span></div>
       </div>
       <div class="new-message-form w-form">
-        <form id="email-form" name="email-form" data-name="Email Form" class="form"><textarea id="field" name="field" maxlength="5000" placeholder="Digite sua mensagem e pressione &lt;Enter&gt;" autofocus="true" class="msg w-input"></textarea><a href="#" class="send-audio w-button">Enviar<br>Áudio</a></form>
+        <form id="email-form" name="email-form" data-name="Email Form" class="form">
+            <textarea id="msg" name="msg" maxlength="5000" placeholder="Digite sua mensagem e pressione &lt;Enter&gt;" autofocus="true" class="msg w-input"></textarea>
+            <a href="#" class="send-audio w-button">Enviar<br>Áudio</a>
+        </form>
         <div class="w-form-done">
           <div>Thank you! Your submission has been received!</div>
         </div>
@@ -50,13 +53,17 @@
     <script>
         $(function() {
             const socket = io();
+            let selectedRoom = '';
 
             const addRoom = (id, name) => {
                 $('.room-list').append(`<li data-id="${id}" class="room-item">${name}<span class="notifications"></span></li>`);
             };
 
             $('.room-list').on('click', '.room-item', function() {
-                socket.emit('join', $(this).data('id'));
+                const roomId = $(this).data('id');
+
+                socket.emit('join', roomId);
+                selectedRoom = roomId;
             });
 
             $('.add-room').on('click', function() {
@@ -64,6 +71,16 @@
 
                 if (roomName) {
                     socket.emit('addRoom', roomName);
+                }
+            });
+
+            $('#msg').on('keyup', function(e) {
+                if (selectedRoom !== '' && e.keyCode === 13) {
+                    socket.emit('sendMsg', {
+                        text: $(this).val(),
+                        room: selectedRoom
+                    });
+                    $(this).val('');
                 }
             });
 

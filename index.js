@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const session = require('express-session');
+const sharedSession = require('express-socket.io-session');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const http = require('http').Server(app);
@@ -12,6 +13,7 @@ const urlConnect = process.env.DB_URL;
 const port = process.env.PORT || 3000;
 
 const Room = require('./models/room');
+const Message = require('./models/message');
 
 mongoose.Promise = global.Promise;
 
@@ -19,14 +21,18 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(session({
+
+const expressSession = session({
   secret: 'socketio',
   cookie: {
     maxAge: 10*60*1000
   },
   resave: true,
   saveUninitialized: true
-}));
+});
+
+app.use(expressSession);
+io.use(sharedSession(expressSession, { autoSave: true }));
 
 app.get('/', (req, res) => res.render('home'));
 app.post('/', (req, res) => {
@@ -63,6 +69,19 @@ io.on('connection', socket => {
 
   socket.on('join', roomId => {
     socket.join(roomId);
+  });
+
+  socket.on('sendMsg', msg => {
+    const message = new Message({
+      message: msg.text
+    });
+
+    console.log(msg);
+    console.log(socket.handshake.session);
+
+    // message
+    //   .save()
+    //   .then();
   });
 
 });
