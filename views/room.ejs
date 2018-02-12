@@ -22,9 +22,9 @@
     <div class="rooms">
       <h1 class="title-rooms">Salas Disponíveis</h1>
       <ul class="room-list w-list-unstyled">
-        <li class="room-item">Sala 1</li>
+        <!-- <li class="room-item">Sala 1</li>
         <li class="room-item">Sala 2</li>
-        <li class="room-item">Sala 3 <span class="notifications">(2)</span></li>
+        <li class="room-item">Sala 3 <span class="notifications">(2)</span></li> -->
       </ul>
       <div class="add-room">+</div>
     </div>
@@ -47,22 +47,36 @@
   <script src="js/webflow.js" type="text/javascript"></script>
   <!-- [if lte IE 9]><script src="https://cdnjs.cloudflare.com/ajax/libs/placeholders/3.0.2/placeholders.min.js"></script><![endif] -->
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-      $(function() {
-          const socket = io();
+    <script>
+        $(function() {
+            const socket = io();
 
-          $('.add-room').on('click', function() {
-              const roomName = prompt('Informe o nome da sala.');
+            const addRoom = (id, name) => {
+                $('.room-list').append(`<li data-id="${id}" class="room-item">${name}<span class="notifications"></span></li>`);
+            };
 
-              if (roomName) {
-                  socket.emit('addRoom', roomName);
-              }
-          });
+            $('.room-list').on('click', '.room-item', function() {
+                socket.emit('join', $(this).data('id'));
+            });
 
-          socket.on('newRoom', function(room) {
-              console.log(room);
-          });
-      });
+            $('.add-room').on('click', function() {
+                const roomName = prompt('Informe o nome da sala.');
+
+                if (roomName) {
+                    socket.emit('addRoom', roomName);
+                }
+            });
+
+            socket.on('newRoom', function(room) {
+                addRoom(room._id, room.name);
+            });
+
+            socket.on('roomList', function(rooms) {
+                rooms.map(room => {
+                    addRoom(room._id, room.name);
+                });
+            });
+        });
   </script>
 </body>
 </html>

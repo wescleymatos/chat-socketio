@@ -48,6 +48,10 @@ app.get('/room', (req, res) => {
 
 io.on('connection', socket => {
 
+  Room.find({}, (err, rooms) => {
+    socket.emit('roomList', rooms);
+  });
+
   socket.on('addRoom', roomName => {
     const room = new Room({ name: roomName });
     room
@@ -55,6 +59,10 @@ io.on('connection', socket => {
       .then(() => {
         io.emit('newRoom', room);
       });
+  });
+
+  socket.on('join', roomId => {
+    socket.join(roomId);
   });
 
 });
