@@ -80,7 +80,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # compiled output
-**/public
 **/dist
 **/tmp
 **/out-tsc
