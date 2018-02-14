@@ -33,6 +33,15 @@ const expressSession = session({
 
 app.use(expressSession);
 io.use(sharedSession(expressSession, { autoSave: true }));
+io.use((socket, next) => {
+  const session = socket.handshake.session;
+
+  if (!session.user) {
+    next(new Error('Auth failed.'));
+  } else {
+    next();
+  }
+});
 
 app.get('/', (req, res) => res.render('home'));
 app.post('/', (req, res) => {
