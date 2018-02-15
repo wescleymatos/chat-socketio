@@ -100,6 +100,22 @@ io.on('connection', socket => {
       });
   });
 
+  socket.on('sendAudio', msg => {
+    const message = new Message({
+      author: socket.handshake.session.user.name,
+      when: new Date(),
+      message: msg.data,
+      msgType: 'audio',
+      room: msg.room
+    });
+
+    message
+      .save()
+      .then(() => {
+        io.to(msg.room).emit('newAudio', message)
+      });
+  });
+
 });
 
 mongoose

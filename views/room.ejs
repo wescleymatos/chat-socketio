@@ -29,14 +29,8 @@
       <div class="new-message-form w-form">
         <form id="email-form" name="email-form" data-name="Email Form" class="form">
             <textarea id="msg" name="msg" maxlength="5000" placeholder="Digite sua mensagem e pressione &lt;Enter&gt;" autofocus="true" class="msg w-input"></textarea>
-            <a href="#" class="send-audio w-button">Enviar<br>Áudio</a>
+            <button type="button" class="send-audio w-button">Enviar<br>Áudio</button>
         </form>
-        <div class="w-form-done">
-          <div>Thank you! Your submission has been received!</div>
-        </div>
-        <div class="w-form-fail">
-          <div>Oops! Something went wrong while submitting the form.</div>
-        </div>
       </div>
     </div>
   </div>
@@ -48,16 +42,58 @@
         $(function() {
             const socket = io();
             let selectedRoom = '';
+            let mediaRecorder = null;
+            let chunks = [];
+            let audioPermission = false;
+
+            const btnSendAudio = $('.send-audio');
+
+            navigator.mediaDevices.getUserMedia({audio: true})
+                .then(stream => {
+                    audioPermission = true;
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.addEventListener('dataavailable', function(e) {
+                        chunks.push(e.data);
+                    });
+
+                    mediaRecorder.addEventListener('stop', function(e) {
+                        const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.addEventListener('loadend', function() {
+                            socket.emit('sendAudio', {
+                                data: reader.result,
+                                room: selectedRoom
+                            });
+                        });
+
+                        chunks = [];
+                    });
+
+                }, err => {
+                    audioPermission = false;
+                    mediaRecorder = null;
+                });
+
 
             const addRoom = (id, name) => {
                 $('.room-list').append(`<li data-id="${id}" class="room-item">${name}<span class="notifications"></span></li>`);
+            };
+
+            const renderMsg = (type, msg) => {
+                if (type === 'audio') {
+                    return `<audio src="${msg}" controls></audio>`;
+                } else {
+                    return msg;
+                }
             };
 
             const addMsg = msg => {
                 const html = `
                     <div class="message">
                         <span class="author">${msg.author}</span><br>
-                        <span class="msg-body">${msg.message}</span>
+                        <span class="msg-body">${renderMsg(msg.msgType, msg.message)}</span>
                     </div>`;
 
                 $('.messages').append(html);
@@ -105,9 +141,30 @@
                 }
             });
 
+            socket.on('newAudio', function(message) {
+                if (selectedRoom === message.room) {
+                    addMsg(message);
+                } else {
+
+                }
+            });
+
             socket.on('msgList', function(msgs) {
                 $('.messages').html('');
                 msgs.map(msg => addMsg(msg));
+            });
+
+
+            btnSendAudio.on('mouseup', function() {
+                if (audioPermission) {
+                    mediaRecorder.stop();
+                }
+            });
+
+            btnSendAudio.on('mousedown', function() {
+                if (audioPermission && selectedRoom !== '') {
+                    mediaRecorder.start();
+                }
             });
         });
   </script>
