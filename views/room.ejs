@@ -104,6 +104,7 @@
 
                 socket.emit('join', roomId);
                 selectedRoom = roomId;
+                $(`li[data-id="${roomId}"] .notifications`).text('');
             });
 
             $('.add-room').on('click', function() {
@@ -137,7 +138,8 @@
                 if (selectedRoom === message.room) {
                     addMsg(message);
                 } else {
-
+                    const id = message.room;
+                    $(`li[data-id="${id}"] .notifications`).text(' (*)');
                 }
             });
 
